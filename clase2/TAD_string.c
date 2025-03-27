@@ -4,7 +4,7 @@
 
 str create()
 {
-  str nuevo = (str)malloc(sizeof(str));
+  str nuevo = (str)malloc(sizeof(NodoStr));
   if (nuevo == NULL)
   {
     printf("Error en la asignación de memoria para el nuevo nodo.");

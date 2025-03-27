@@ -5,7 +5,7 @@
 
 list createList()
 {
-  list nuevo = (list)malloc(sizeof(list));
+  list nuevo = (list)malloc(sizeof(NodoLis));
   if (nuevo == NULL)
   {
     printf("Error en la asignación de memoria para el nuevo nodo de la lista.");
