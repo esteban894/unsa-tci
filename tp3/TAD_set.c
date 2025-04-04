@@ -1,9 +1,198 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "TAD_set.h"
+#include "TAD_string.h"
 
-set createSet();
-void appendSet(set *conjunto, str cadena);
-set toSet(str cadena, char token);
-set unionSet(set conjunto1, set conjunto2);
-set intersectionSet(set conjunto1, set conjunto2);
-set diference(set conjunto1, set conjunto2);
-void showSet(set conjunto);
+set createSet()
+{
+  set nuevo = (set)malloc(sizeof(NodoSet));
+  if (nuevo == NULL)
+  {
+    printf("Error en la asignación de memoria para el nuevo nodo del conjunto.");
+    return NULL;
+  }
+  nuevo->string = NULL;
+  nuevo->sig = NULL;
+  return nuevo;
+}
+
+void appendSet(set *conjunto, str cadena)
+{
+  if (*conjunto == NULL || (*conjunto)->string == NULL)
+  {
+    *conjunto = createSet();
+    if (*conjunto == NULL)
+      return;
+    (*conjunto)->string = cadena;
+    (*conjunto)->sig = NULL;
+    return;
+  }
+
+  set aux = *conjunto;
+  while (aux->sig != NULL)
+    aux = aux->sig;
+  set nuevo = createSet();
+  if (nuevo == NULL)
+    return;
+  nuevo->string = cadena;
+  nuevo->sig = NULL;
+  aux->sig = nuevo;
+}
+
+// 000,001,010,011
+
+set toSet(str cadena, char token)
+{ // toSet(string, ',')
+  set conjunto = NULL;
+
+  str aux = cadena;
+
+  if (aux != NULL)
+  {
+    appendSet(&conjunto, beforeToken(aux, token));
+    while (aux != NULL)
+    {
+      if (aux->character == token)
+      {
+        aux = aux->sig;
+        if (aux != NULL)
+        {
+          str stringToken = beforeToken(aux, token);
+          set temp = conjunto;
+          int found = 0;
+          while (temp != NULL)
+          {
+            if (compareStr(temp->string, stringToken) == 1)
+            {
+              found = 1;
+              break;
+            }
+            temp = temp->sig;
+          }
+          if (!found)
+          {
+            appendSet(&conjunto, stringToken);
+          }
+        }
+      }
+      else
+      {
+        aux = aux->sig;
+      }
+    }
+  }
+  else
+    conjunto = createSet();
+  return conjunto;
+}
+
+set unionSet(set conjunto1, set conjunto2)
+{
+  set nuevo = NULL;
+  set aux = conjunto1;
+  while (aux != NULL)
+  {
+    appendSet(&nuevo, aux->string);
+    aux = aux->sig;
+  }
+  aux = conjunto2;
+  while (aux != NULL)
+  {
+    set temp = nuevo;
+    int found = 0;
+    while (temp != NULL)
+    {
+      if (compareStr(temp->string, aux->string) == 1)
+      {
+        found = 1;
+        break;
+      }
+      temp = temp->sig;
+    }
+    if (!found)
+    {
+      appendSet(&nuevo, aux->string);
+    }
+    aux = aux->sig;
+  }
+  return nuevo;
+}
+set intersectionSet(set conjunto1, set conjunto2)
+{
+  set nuevo = NULL;
+  set aux1 = conjunto1;
+  set aux2 = conjunto2;
+  while (aux1 != NULL && aux2 != NULL)
+  {
+    if (compareStr(aux1->string, aux2->string) == 1)
+    {
+      appendSet(&nuevo, aux1->string);
+    }
+    aux1 = aux1->sig;
+    aux2 = aux2->sig;
+  }
+  return nuevo;
+}
+
+set diferenceSet(set conjunto1, set conjunto2)
+{
+  set nuevo = NULL;
+  set aux1 = conjunto1;
+  set aux2 = conjunto2;
+  while (aux1 != NULL)
+  {
+    int found = 0;
+    set temp = aux2;
+    while (temp != NULL)
+    {
+      if (compareStr(aux1->string, temp->string) == 1)
+      {
+        found = 1;
+        break;
+      }
+      temp = temp->sig;
+    }
+    if (!found)
+    {
+      appendSet(&nuevo, aux1->string);
+    }
+    aux1 = aux1->sig;
+  }
+  return nuevo;
+}
+
+void showSet(set conjunto)
+{
+  if (conjunto == NULL)
+  {
+    printf("{}\n");
+    return;
+  }
+
+  set aux = conjunto;
+
+  printf("{");
+  while (aux != NULL)
+  {
+    if (aux->string != NULL)
+    {
+      // print(aux->string);
+      str aux2 = aux->string;
+      while (aux2 != NULL)
+      {
+        printf("%c", aux2->character);
+        aux2 = aux2->sig;
+      }
+    }
+    else
+    {
+      print(aux->string);
+    }
+    if (aux->sig != NULL)
+    {
+      printf(", ");
+    }
+    aux = aux->sig;
+  }
+  printf("}\n");
+}

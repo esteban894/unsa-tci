@@ -22,7 +22,7 @@ void show(list lista)
   if (lista == NULL)
   {
     // Si la lista está vacía
-    printf("Lista vacía.\n");
+    printf("[]\n");
     return;
   }
 
@@ -49,14 +49,11 @@ void show(list lista)
 
 void append(list *lista, str s)
 {
-  if (*lista == NULL)
+  if (*lista == NULL || (*lista)->string == NULL)
   {
     *lista = createList();
     if (*lista == NULL)
-    {
-      printf("Error en la asignación de memoria para el nuevo nodo de la lista.");
       return;
-    }
     (*lista)->string = s;
     (*lista)->sig = NULL;
     return;

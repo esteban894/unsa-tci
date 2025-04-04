@@ -15,6 +15,6 @@ void appendSet(set *, str);
 set toSet(str, char);
 set unionSet(set, set);
 set intersectionSet(set, set);
-set diference(set, set);
+set diferenceSet(set, set);
 void showSet(set);
 #endif
