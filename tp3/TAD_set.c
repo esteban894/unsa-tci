@@ -96,7 +96,7 @@ set unionSet(set conjunto1, set conjunto2)
     aux = aux->sig;
   }
   aux = conjunto2;
-  while (aux != NULL)
+  while (aux != NULL && aux->string != NULL)
   {
     set temp = nuevo;
     int found = 0;
