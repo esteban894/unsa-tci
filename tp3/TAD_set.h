@@ -17,4 +17,9 @@ set unionSet(set, set);
 set intersectionSet(set, set);
 set diferenceSet(set, set);
 void showSet(set);
+int cardinal(set);
+int belongsTo(set, str);
+int includedIn(set, set);
+void destroySet(set *);
+void removeSetNode(set *head, set target);
 #endif

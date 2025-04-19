@@ -196,3 +196,83 @@ void showSet(set conjunto)
   }
   printf("}\n");
 }
+
+int cardinal(set conjunto)
+{
+  int count = 0;
+  set aux = conjunto;
+  while (aux != NULL)
+  {
+    count++;
+    aux = aux->sig;
+  }
+  return count;
+}
+
+int belongsTo(set conjunto, str cadena)
+{
+  set aux = conjunto;
+  while (aux != NULL)
+  {
+    if (compareStr(aux->string, cadena) == 1)
+    {
+      return 1;
+    }
+    aux = aux->sig;
+  }
+  return 0;
+}
+
+int includedIn(set conjunto1, set conjunto2) // que conjunto2 este contenido en conjunto1
+{
+  set aux1 = conjunto1;
+  set aux2 = conjunto2;
+  while (aux2 != NULL)
+  {
+    if (!belongsTo(aux1, aux2->string))
+    {
+      return 0;
+    }
+    aux2 = aux2->sig;
+  }
+  return 1;
+}
+
+void destroySet(set *conjunto)
+{
+  set aux = *conjunto;
+  while (aux != NULL)
+  {
+    set temp = aux;
+    aux = aux->sig;
+    free(temp->string);
+    free(temp);
+  }
+  *conjunto = NULL;
+}
+
+void removeSetNode(set *head, set target)
+{
+  if (*head == NULL || target == NULL)
+    return;
+
+  if (*head == target)
+  {
+    *head = target->sig;
+  }
+  else
+  {
+    set aux = *head;
+    while (aux->sig != NULL && aux->sig != target)
+    {
+      aux = aux->sig;
+    }
+    if (aux->sig == target)
+    {
+      aux->sig = target->sig;
+    }
+  }
+
+  target->sig = NULL;
+  destroySet(&target);
+}
