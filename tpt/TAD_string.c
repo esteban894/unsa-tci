@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-str create()
+Str createStr()
 {
-  str nuevo = (str)malloc(sizeof(str));
+  Str nuevo = (Str)malloc(sizeof(Str));
   if (nuevo == NULL)
   {
     printf("Error en la asignación de memoria para el nuevo nodo.");
@@ -15,15 +15,15 @@ str create()
   return nuevo;
 }
 
-str load()
+Str load()
 {
-  str head = NULL;
-  str tail = NULL;
+  Str head = NULL;
+  Str tail = NULL;
   char c;
   printf("Ingrese una cadena: ");
   while ((c = getchar()) != '\n')
   {
-    str nuevo = create();
+    Str nuevo = create();
     if (nuevo == NULL)
     {
       return NULL;
@@ -43,14 +43,14 @@ str load()
   return head;
 }
 
-str load2(const char *input)
+Str load2(const char *input)
 {
-  str head = NULL;
-  str tail = NULL;
+  Str head = NULL;
+  Str tail = NULL;
   int i;
   for (i = 0; input[i] != '\0'; i++)
   {
-    str nuevo = create();
+    Str nuevo = create();
     if (nuevo == NULL)
     {
       return NULL;
@@ -71,14 +71,14 @@ str load2(const char *input)
   return head;
 }
 
-void print(str s)
+void print(Str s)
 {
   if (s == NULL)
   {
     printf("La cadena esta vacia.");
     return;
   }
-  str actual = s;
+  Str actual = s;
   while (actual != NULL)
   {
     printf("%c", actual->character);
@@ -87,20 +87,20 @@ void print(str s)
   // printf("\n");
 }
 
-str concat(str s1, str s2)
+Str concat(Str s1, Str s2)
 {
   if (s1 == NULL)
     return s2;
   if (s2 == NULL)
     return s1;
 
-  str head = NULL;
-  str tail = NULL;
+  Str head = NULL;
+  Str tail = NULL;
 
-  str actual = s1;
+  Str actual = s1;
   while (actual != NULL)
   {
-    str nuevo = create();
+    Str nuevo = create();
     if (nuevo == NULL)
     {
       return NULL;
@@ -125,7 +125,7 @@ str concat(str s1, str s2)
   actual = s2;
   while (actual != NULL)
   {
-    str nuevo = create();
+    Str nuevo = create();
     if (nuevo == NULL)
     {
       return NULL;
@@ -150,18 +150,18 @@ str concat(str s1, str s2)
   return head;
 }
 
-str beforeToken(str s, char token)
+Str beforeToken(Str s, char token)
 {
   if (s == NULL)
     return NULL;
 
-  str head = NULL;
-  str tail = NULL;
+  Str head = NULL;
+  Str tail = NULL;
 
-  str actual = s;
+  Str actual = s;
   while (actual != NULL && actual->character != token)
   {
-    str nuevo = create();
+    Str nuevo = create();
     if (nuevo == NULL)
     {
       return NULL;
@@ -183,4 +183,4 @@ str beforeToken(str s, char token)
   return head;
 }
 
-str load3(); // cargar un string en base a un archivo .txt o .csv
+Str load3(); // cargar un string en base a un archivo .txt o .csv

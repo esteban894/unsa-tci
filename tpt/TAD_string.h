@@ -8,14 +8,14 @@ typedef struct NodoStr
   struct NodoStr *sig;
 } NodoStr;
 
-typedef NodoStr *str;
+typedef NodoStr *Str;
 
-str create();
-str load();
-str load2(const char *);
-void print(str);
-str concat(str, str);
-str beforeToken(str, char);
-str load3(); // nose
+Str createStr();
+Str load();
+Str load2(const char *);
+void print(Str);
+Str concat(Str, Str);
+Str beforeToken(Str, char);
+Str load3(); // nose
 
 #endif
