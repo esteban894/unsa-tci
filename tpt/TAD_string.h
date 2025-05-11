@@ -16,6 +16,7 @@ Str load2(const char *);
 void print(Str);
 Str concat(Str, Str);
 Str beforeToken(Str, char);
-Str load3(); // nose
+Str load3(); // load from file
+int compareStr(Str s1, Str s2);
 
 #endif

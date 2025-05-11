@@ -23,7 +23,7 @@ Str load()
   printf("Ingrese una cadena: ");
   while ((c = getchar()) != '\n')
   {
-    Str nuevo = create();
+    Str nuevo = createStr();
     if (nuevo == NULL)
     {
       return NULL;
@@ -50,7 +50,7 @@ Str load2(const char *input)
   int i;
   for (i = 0; input[i] != '\0'; i++)
   {
-    Str nuevo = create();
+    Str nuevo = createStr();
     if (nuevo == NULL)
     {
       return NULL;
@@ -100,7 +100,7 @@ Str concat(Str s1, Str s2)
   Str actual = s1;
   while (actual != NULL)
   {
-    Str nuevo = create();
+    Str nuevo = createStr();
     if (nuevo == NULL)
     {
       return NULL;
@@ -125,7 +125,7 @@ Str concat(Str s1, Str s2)
   actual = s2;
   while (actual != NULL)
   {
-    Str nuevo = create();
+    Str nuevo = createStr();
     if (nuevo == NULL)
     {
       return NULL;
@@ -161,7 +161,7 @@ Str beforeToken(Str s, char token)
   Str actual = s;
   while (actual != NULL && actual->character != token)
   {
-    Str nuevo = create();
+    Str nuevo = createStr();
     if (nuevo == NULL)
     {
       return NULL;
@@ -184,3 +184,23 @@ Str beforeToken(Str s, char token)
 }
 
 Str load3(); // cargar un string en base a un archivo .txt o .csv
+
+int compareStr(Str s1, Str s2)
+{
+  // Recorremos ambas listas mientras no sean NULL
+  while (s1 != NULL && s2 != NULL)
+  {
+    // Comparamos los caracteres de ambas cadenas
+    if (s1->character != s2->character)
+    {
+      return 0; // Si hay una diferencia, las cadenas no son iguales
+    }
+    // Avanzamos al siguiente nodo en ambas listas
+    s1 = s1->sig;
+    s2 = s2->sig;
+  }
+
+  // Si ambas listas llegaron al final, son iguales
+  // Si una es NULL y la otra no, no son iguales
+  return (s1 == NULL && s2 == NULL) ? 1 : 0;
+}

@@ -42,9 +42,15 @@ typedef struct dataType *tData;
 //   }
 // };
 
-int belongsTo(tData structure, tData element);
-tData createNodeStr(str);
-tData createNodeSet(set);
-tData createNodeList(list);
-void printStruct(tData structure); // func recursiva con caso base nodeType=1 y llamda a print de str
+// int belongsTo(tData structure, tData element);
+tData createNodeStr(Str);
+tData createNodeSet(Set);
+tData createNodeList(List);
+void printStruct(tData structure); // func recursiva con caso base nodo->nodeType == STR => print(nodo->string)
+tData concatNodeStr(tData s1, tData s2);
+tData beforeTokenNodeStr(tData s, char token);
+int compareNodeStr(tData s1, tData s2);
+void appendNodeList(tData *list, tData node);
+tData toNodeStr(tData list);
+
 #endif

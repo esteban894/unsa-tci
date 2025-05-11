@@ -33,9 +33,7 @@ void show(List lista)
   {
     if (aux->string != NULL)
     {
-      printf("'");
       print(aux->string);
-      printf("'");
     }
 
     if (aux->sig != NULL)
@@ -75,7 +73,7 @@ void append(List *lista, Str s)
 
 Str toStr(List lista) // ["hola", " mundo"] => "hola mundo"
 {
-  Str result = create();
+  Str result = createStr();
   if (lista != NULL)
   {
     do
@@ -94,7 +92,7 @@ List strToList(Str string) // "hola" => ["h", "o", "l", "a"]
   {
     while (string != NULL)
     {
-      Str aux = create();
+      Str aux = createStr();
       aux->character = string->character;
       aux->sig = NULL;
       append(&lista, aux);

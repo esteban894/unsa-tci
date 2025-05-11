@@ -14,6 +14,6 @@ List createList();
 void show(List);
 void append(List *, Str);
 Str toStr(List);
-List strToList(str);
+List strToList(Str);
 
 #endif
