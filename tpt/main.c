@@ -39,6 +39,7 @@ int options()
   printf("0. Salir\n");
   printf("Selecciona una opcion: ");
   scanf("%d", &option);
+  __fpurge(stdin);
   return option;
 }
 
@@ -123,8 +124,9 @@ void menu(Af *af)
     if (*af != NULL)
     {
       printf("\nIngresa una cadena para verificar si el automata la acepta: ");
-      fflush(stdin);
       Str input = load();
+      __fpurge(stdin);
+      // fflush(stdin);
       if (acceptsString(*af, input))
       {
         printf("\nEl automata acepta la cadena ");
@@ -151,8 +153,9 @@ void menu(Af *af)
     {
       printf("\nAFD creado exitosamente.\n");
       printAf(afd, 0);
-      fflush(stdin);
       Str testString = load();
+      // fflush(stdin);
+      __fpurge(stdin);
       if (acceptsString(afd, testString))
       {
         printf("\nEl AFD acepta la cadena ");
