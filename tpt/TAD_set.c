@@ -18,6 +18,9 @@ Set createSet()
 
 void appendSet(Set *conjunto, Str cadena)
 {
+  if (cadena == NULL || cadena->character == '\0')
+    return;
+
   if (*conjunto == NULL || (*conjunto)->string == NULL)
   {
     *conjunto = createSet();
@@ -31,9 +34,11 @@ void appendSet(Set *conjunto, Str cadena)
   Set aux = *conjunto;
   while (aux->sig != NULL)
     aux = aux->sig;
+
   Set nuevo = createSet();
   if (nuevo == NULL)
     return;
+
   nuevo->string = cadena;
   nuevo->sig = NULL;
   aux->sig = nuevo;
@@ -89,48 +94,72 @@ Set toSet(Str cadena, char token)
 Set unionSet(Set conjunto1, Set conjunto2)
 {
   Set nuevo = NULL;
+
   Set aux = conjunto1;
   while (aux != NULL)
   {
-    appendSet(&nuevo, aux->string);
-    aux = aux->sig;
-  }
-  aux = conjunto2;
-  while (aux != NULL && aux->string != NULL)
-  {
-    Set temp = nuevo;
-    int found = 0;
-    while (temp != NULL)
-    {
-      if (compareStr(temp->string, aux->string) == 1)
-      {
-        found = 1;
-        break;
-      }
-      temp = temp->sig;
-    }
-    if (!found)
+    if (aux->string != NULL && aux->string->character != '\0')
     {
       appendSet(&nuevo, aux->string);
     }
     aux = aux->sig;
   }
+
+  aux = conjunto2;
+  while (aux != NULL && aux->string != NULL)
+  {
+    if (aux->string->character != '\0')
+    {
+      Set temp = nuevo;
+      int found = 0;
+
+      while (temp != NULL)
+      {
+        if (temp->string != NULL && compareStr(temp->string, aux->string) == 1)
+        {
+          found = 1;
+          break;
+        }
+        temp = temp->sig;
+      }
+
+      if (!found)
+      {
+        appendSet(&nuevo, aux->string);
+      }
+    }
+    aux = aux->sig;
+  }
   return nuevo;
 }
+
 Set intersectionSet(Set conjunto1, Set conjunto2)
 {
   Set nuevo = NULL;
+
+  if (conjunto1 == NULL || conjunto2 == NULL)
+    return nuevo;
+
   Set aux1 = conjunto1;
-  Set aux2 = conjunto2;
-  while (aux1 != NULL && aux2 != NULL)
+  while (aux1 != NULL && aux1->string != NULL)
   {
-    if (compareStr(aux1->string, aux2->string) == 1)
+    if (aux1->string->character != '\0')
     {
-      appendSet(&nuevo, aux1->string);
+      Set aux2 = conjunto2;
+      while (aux2 != NULL && aux2->string != NULL)
+      {
+        if (aux2->string->character != '\0' &&
+            compareStr(aux1->string, aux2->string) == 1)
+        {
+          appendSet(&nuevo, aux1->string);
+          break;
+        }
+        aux2 = aux2->sig;
+      }
     }
     aux1 = aux1->sig;
-    aux2 = aux2->sig;
   }
+
   return nuevo;
 }
 
@@ -165,36 +194,36 @@ void showSet(Set conjunto)
 {
   if (conjunto == NULL)
   {
-    printf("{}\n");
+    printf("{}");
     return;
   }
 
   Set aux = conjunto;
-
   printf("{");
+
+  int first = 1;
   while (aux != NULL)
   {
-    if (aux->string != NULL)
+    if (aux->string != NULL && aux->string->character != '\0')
     {
-      // print(aux->string);
+      if (!first)
+      {
+        printf(", ");
+      }
+
       Str aux2 = aux->string;
       while (aux2 != NULL)
       {
         printf("%c", aux2->character);
         aux2 = aux2->sig;
       }
-    }
-    else
-    {
-      print(aux->string);
-    }
-    if (aux->sig != NULL)
-    {
-      printf(", ");
+
+      first = 0;
     }
     aux = aux->sig;
   }
-  printf("}\n");
+
+  printf("}");
 }
 
 int cardinal(Set conjunto)

@@ -1138,25 +1138,65 @@ int isAcceptingState(Af af, Str state)
 
 int acceptsString(Af af, Str input)
 {
-  if (af == NULL || af->q0 == NULL)
-    return 0;
+  printf("\n🧪 VERIFICANDO ACEPTACIÓN DE CADENA (VERSIÓN CORREGIDA)\n");
+  printf("═══════════════════════════════════════════════════════════\n");
 
-  Set currentStates = processString(af, input);
-  if (currentStates == NULL)
-    return 0;
+  // Procesar la cadena y obtener conjunto de estados finales
+  Set estadosFinales = processString(af, input);
 
-  int result = 0;
-  Set auxSet = currentStates;
-  while (auxSet != NULL && auxSet->string != NULL)
+  if (estadosFinales == NULL)
   {
-    if (isAcceptingState(af, auxSet->string))
-    {
-      result = 1;
-      break;
-    }
-    auxSet = auxSet->sig;
+    printf("❌ No se pudo procesar la cadena\n");
+    return 0;
   }
-  return result;
+
+  // Obtener conjunto F del autómata de manera segura
+  Set estadosAceptacion = createSet();
+  if (af->F != NULL)
+  {
+    tData currentF = af->F;
+    while (currentF != NULL)
+    {
+      if (currentF->data != NULL && currentF->data->nodeType == STR &&
+          currentF->data->string != NULL && currentF->data->string->character != '\0')
+      {
+        appendSet(&estadosAceptacion, currentF->data->string);
+      }
+      currentF = currentF->next;
+    }
+  }
+
+  printf("\n🔍 Verificando aceptación:\n");
+  printf("   Estados alcanzados: ");
+  showSet(estadosFinales); // Usar versión corregida
+  printf("\n");
+  printf("   Estados de aceptación (F): ");
+  showSet(estadosAceptacion); // Usar versión corregida
+  printf("\n");
+
+  // Calcular intersección de manera segura
+  Set interseccion = intersectionSet(estadosFinales, estadosAceptacion);
+
+  printf("   Intersección: ");
+  showSet(interseccion); // Usar versión corregida
+  printf("\n");
+
+  // Si la intersección no está vacía, la cadena es aceptada
+  int aceptada = (interseccion != NULL && interseccion->string != NULL &&
+                  interseccion->string->character != '\0');
+
+  printf("\n🎯 Resultado: La cadena es %s\n",
+         aceptada ? "✅ ACEPTADA" : "❌ RECHAZADA");
+
+  // Limpiar memoria de manera segura
+  if (estadosFinales != NULL)
+    destroySet(&estadosFinales);
+  if (estadosAceptacion != NULL)
+    destroySet(&estadosAceptacion);
+  if (interseccion != NULL)
+    destroySet(&interseccion);
+
+  return aceptada;
 }
 
 Set getAllTransitions(Af af, Str currentState, Str symbol)
@@ -1165,17 +1205,13 @@ Set getAllTransitions(Af af, Str currentState, Str symbol)
 
   if (af == NULL || af->delta == NULL ||
       currentState == NULL || symbol == NULL)
-  {
     return resultado;
-  }
 
-  // Recorrer todas las transiciones
   tData deltaList = af->delta;
   while (deltaList != NULL)
   {
     if (deltaList->data != NULL && deltaList->data->nodeType == SET)
     {
-      // Extraer elementos de la transición {origen, símbolo, destino}
       tData transition = deltaList->data;
       tData elements[3] = {NULL, NULL, NULL};
       int index = 0;
@@ -1188,16 +1224,18 @@ Set getAllTransitions(Af af, Str currentState, Str symbol)
         index++;
       }
 
-      // Verificar si coincide con estado y símbolo actual
       if (index == 3 && elements[0] != NULL && elements[1] != NULL && elements[2] != NULL)
       {
         if (elements[0]->nodeType == STR && elements[1]->nodeType == STR && elements[2]->nodeType == STR)
         {
-          if (compareStr(elements[0]->string, currentState) == 1 &&
-              compareStr(elements[1]->string, symbol) == 1)
+          if (elements[0]->string != NULL && elements[1]->string != NULL && elements[2]->string != NULL &&
+              elements[0]->string->character != '\0' && elements[1]->string->character != '\0' && elements[2]->string->character != '\0')
           {
-            // Agregar estado destino al conjunto resultado
-            appendSet(&resultado, elements[2]->string);
+            if (compareStr(elements[0]->string, currentState) == 1 &&
+                compareStr(elements[1]->string, symbol) == 1)
+            {
+              appendSet(&resultado, elements[2]->string);
+            }
           }
         }
       }
@@ -1217,15 +1255,42 @@ Set processSymbolFromSet(Af af, Set currentStates, Str symbol)
     return resultado;
   }
 
+  printf("🔍 DEBUG processSymbolFromSet:\n");
+  printf("   Estados entrada: ");
+  showSet(currentStates);
+  printf("\n");
+  printf("   Símbolo: '");
+  print(symbol);
+  printf("'\n");
+
   Set estadoActual = currentStates;
   while (estadoActual != NULL && estadoActual->string != NULL)
   {
-    Set transicionesDesdeEstado = getAllTransitions(af, estadoActual->string, symbol);
+    if (estadoActual->string->character != '\0')
+    {
+      printf("   Procesando estado: '");
+      print(estadoActual->string);
+      printf("'\n");
 
-    resultado = unionSet(resultado, transicionesDesdeEstado);
+      Set transicionesDesdeEstado = getAllTransitions(af, estadoActual->string, symbol);
+
+      printf("     Transiciones encontradas: ");
+      showSet(transicionesDesdeEstado); // Usar la versión corregida
+      printf("\n");
+
+      if (transicionesDesdeEstado != NULL && transicionesDesdeEstado->string != NULL &&
+          transicionesDesdeEstado->string->character != '\0')
+      {
+        resultado = unionSet(resultado, transicionesDesdeEstado);
+      }
+    }
 
     estadoActual = estadoActual->sig;
   }
+
+  printf("   Resultado final: ");
+  showSet(resultado);
+  printf("\n");
 
   return resultado;
 }
@@ -1264,6 +1329,7 @@ Set processString(Af af, Str input)
   {
     Set currentStates = createSet();
     appendSet(&currentStates, af->q0->string);
+    print(af->q0->string);
 
     printf("   Estados iniciales: ");
     showSet(currentStates);
