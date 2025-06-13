@@ -1183,3 +1183,23 @@ void showFormatExamples()
   printf("* Conjunto vacio: {}\n");
   printf("* Lista vacia: []\n\n");
 }
+
+/*
+afnd2afd(Af af):
+  sea A = (Q, Sigma, delta, q0, F)
+  q0b = {a0}
+  Qb={q0b}
+  mientras exista P em Qb | deltab(P, a) = null para cualquier a en Sigma:
+    para cada a en SIgma:
+      deltab(P, a) = UNION r en P => delta(r, a)
+      Qb = Qb Union {deltab(P, a)}
+
+  Fb = {}
+
+  para cada R en Qb:
+    si R Intersec F != vacío
+      Fb = Fb Union {R}
+
+  return [Qb, Sigma, deltab, q0b, Fb]
+
+*/
