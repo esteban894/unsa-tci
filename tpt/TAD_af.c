@@ -294,6 +294,14 @@ void printTransitions(Af af)
 {
   if (af == NULL || af->delta == NULL)
   {
+    if (af == NULL)
+    {
+      printf("AF null\n");
+    }
+    else if (af->delta == NULL)
+    {
+      printf("delta null\n");
+    }
     printf("  No hay transiciones definidas\n");
     return;
   }
