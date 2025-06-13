@@ -2,13 +2,13 @@
 #define TAD_LIST_H
 #include "TAD_string.h"
 
-typedef struct NodoLis
+typedef struct NodoList
 {
   Str string;
-  struct NodoLis *sig;
-} NodoLis;
+  struct NodoList *sig;
+} NodoList;
 
-typedef NodoLis *List;
+typedef NodoList *List;
 
 List createList();
 void show(List);

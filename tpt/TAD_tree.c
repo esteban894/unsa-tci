@@ -1,10 +1,13 @@
 #include "TAD_tree.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 tData createNodeStr(Str string)
 {
-  tData node = NULL;
-  node = (tData)malloc(sizeof(struct dataType));
+  tData node = (tData)malloc(sizeof(struct dataType));
+  if (node == NULL)
+    return NULL;
+
   node->nodeType = STR;
   node->string = string;
   return node;
@@ -12,24 +15,97 @@ tData createNodeStr(Str string)
 
 tData createNodeSet(Set set)
 {
-  tData node = NULL;
-  node = (tData)malloc(sizeof(struct dataType));
-  node->nodeType = SET;
-  tData nodeString = createNodeStr(set->string);
-  node->data = nodeString;
-  node->next = NULL;
-  return node;
+  if (set == NULL)
+    return NULL;
+
+  tData head = NULL;
+  tData tail = NULL;
+  Set current = set;
+
+  // Recorrer el Set y crear nodos tData para cada elemento
+  while (current != NULL && current->string != NULL)
+  {
+    tData newNode = (tData)malloc(sizeof(struct dataType));
+    if (newNode == NULL)
+      return NULL;
+
+    newNode->nodeType = SET;
+    newNode->data = createNodeStr(current->string);
+    newNode->next = NULL;
+
+    if (head == NULL)
+    {
+      head = newNode;
+      tail = newNode;
+    }
+    else
+    {
+      tail->next = newNode;
+      tail = newNode;
+    }
+
+    current = current->sig;
+  }
+
+  return head;
 }
 
 tData createNodeList(List list)
 {
-  tData node = NULL;
-  node = (tData)malloc(sizeof(struct dataType));
-  node->nodeType = LIST;
-  tData nodeString = createNodeStr(list->string);
-  node->data = nodeString;
-  node->next = NULL;
-  return node;
+  if (list == NULL)
+  {
+    // Crear un nodo LIST vacío
+    tData node = (tData)malloc(sizeof(struct dataType));
+    if (node == NULL)
+      return NULL;
+
+    node->nodeType = LIST;
+    node->data = NULL;
+    node->next = NULL;
+    return node;
+  }
+
+  tData head = NULL;
+  tData tail = NULL;
+  List current = list;
+
+  // Recorrer la List y crear nodos tData para cada elemento
+  while (current != NULL && current->string != NULL)
+  {
+    tData newNode = (tData)malloc(sizeof(struct dataType));
+    if (newNode == NULL)
+      return NULL;
+
+    newNode->nodeType = LIST;
+    newNode->data = createNodeStr(current->string);
+    newNode->next = NULL;
+
+    if (head == NULL)
+    {
+      head = newNode;
+      tail = newNode;
+    }
+    else
+    {
+      tail->next = newNode;
+      tail = newNode;
+    }
+
+    current = current->sig;
+  }
+
+  // Si no hay elementos, crear nodo vacío
+  if (head == NULL)
+  {
+    head = (tData)malloc(sizeof(struct dataType));
+    if (head == NULL)
+      return NULL;
+    head->nodeType = LIST;
+    head->data = NULL;
+    head->next = NULL;
+  }
+
+  return head;
 }
 
 void printStruct(tData node)
@@ -46,28 +122,32 @@ void printStruct(tData node)
 
   case LIST:
     // Si es una lista, recorremos sus elementos
-    tData current = node;
     printf("[");
+    tData current = node;
+    int first = 1;
     while (current != NULL)
     {
-      printStruct(current->data); // Recursivamente procesamos cada elemento
-      if (current->next != NULL)
+      if (!first)
         printf(", ");
+      printStruct(current->data); // Recursivamente procesamos cada elemento
       current = current->next;
+      first = 0;
     }
     printf("]");
     break;
 
   case SET:
     // Si es un conjunto, recorremos sus elementos
-    tData currentSet = node;
     printf("{");
+    tData currentSet = node;
+    int firstSet = 1;
     while (currentSet != NULL)
     {
-      printStruct(currentSet->data); // Recursivamente procesamos cada elemento
-      if (currentSet->next != NULL)
+      if (!firstSet)
         printf(", ");
+      printStruct(currentSet->data); // Recursivamente procesamos cada elemento
       currentSet = currentSet->next;
+      firstSet = 0;
     }
     printf("}");
     break;
@@ -119,17 +199,22 @@ int compareNodeStr(tData s1, tData s2)
   return compareStr(s1->string, s2->string);
 }
 
-void appendNodeList(tData *list, tData node) // [1, 2, [3, 4]]
+void appendNodeList(tData *list, tData node)
 {
-  // Si la lista está vacía, crear un nuevo nodo de tipo LIST
+  if (node == NULL)
+    return;
+
+  // Si la lista está vacía, crear el primer nodo
   if (*list == NULL)
   {
-    List newList = createList();
-    *list = createNodeList(newList);
-    if (*list == NULL)
+    tData newNode = (tData)malloc(sizeof(struct dataType));
+    if (newNode == NULL)
       return;
-    (*list)->data = node;
-    (*list)->next = NULL;
+
+    newNode->nodeType = LIST;
+    newNode->data = node;
+    newNode->next = NULL;
+    *list = newNode;
     return;
   }
 
@@ -141,19 +226,16 @@ void appendNodeList(tData *list, tData node) // [1, 2, [3, 4]]
   tData aux = *list;
   while (aux->next != NULL)
   {
-    // Validar que todos los nodos en el recorrido sean de tipo LIST
-    if (aux->next->nodeType != LIST)
-      return;
     aux = aux->next;
   }
 
   // Crear un nuevo nodo de tipo LIST para el elemento a agregar
-  List newList = createList();
-  tData newNode = createNodeList(newList);
+  tData newNode = (tData)malloc(sizeof(struct dataType));
   if (newNode == NULL)
     return;
 
   // Asignar el nodo a agregar como data del nuevo nodo LIST
+  newNode->nodeType = LIST;
   newNode->data = node;
   newNode->next = NULL;
 
@@ -161,11 +243,7 @@ void appendNodeList(tData *list, tData node) // [1, 2, [3, 4]]
   aux->next = newNode;
 }
 
-// [{q0,q1},{0,1},[{q0,0,q1},{q0,1,q0},{q1,0,q0},{q1,1,q1}],q0,{q0}]
-// =>
-// "{q0,q1},{0,1},[{q0,0,q1},{q0,1,q0},{q1,0,q0},{q1,1,q1}],q0,{q0}"
-
-tData toNodeStr(tData node) // [hola, ' ', mundo, [1,2,3]] => "hola mundo"
+tData toNodeStr(tData node)
 {
   if (node == NULL || (node->nodeType != LIST && node->nodeType != SET))
     return NULL;
@@ -191,11 +269,6 @@ tData toNodeStr(tData node) // [hola, ' ', mundo, [1,2,3]] => "hola mundo"
         return NULL;
       result = concat(result, nestedStr->string);
     }
-    // Si es de otro tipo, retornamos NULL
-    else
-    {
-      return NULL;
-    }
 
     aux = aux->next;
   }
@@ -203,7 +276,7 @@ tData toNodeStr(tData node) // [hola, ' ', mundo, [1,2,3]] => "hola mundo"
   return createNodeStr(result);
 }
 
-tData listToNodeStr(tData list) // ["hola", " ", "mundo"] => "hola mundo"
+tData listToNodeStr(tData list)
 {
   if (list == NULL || list->nodeType != LIST)
     return NULL;
@@ -223,4 +296,56 @@ tData listToNodeStr(tData list) // ["hola", " ", "mundo"] => "hola mundo"
   }
 
   return createNodeStr(result);
+}
+
+void destroyTData(tData *node)
+{
+  if (node == NULL || *node == NULL)
+    return;
+
+  tData current = *node;
+
+  switch (current->nodeType)
+  {
+  case STR:
+    // Para nodos STR, liberar la cadena y el nodo
+    if (current->string != NULL)
+    {
+      // Liberar la cadena carácter por carácter
+      Str strCurrent = current->string;
+      while (strCurrent != NULL)
+      {
+        Str temp = strCurrent;
+        strCurrent = strCurrent->sig;
+        free(temp);
+      }
+    }
+    free(current);
+    break;
+
+  case SET:
+  case LIST:
+    // Para nodos SET y LIST, liberar recursivamente los elementos
+    while (current != NULL)
+    {
+      tData temp = current;
+      current = current->next;
+
+      // Liberar recursivamente el contenido (data)
+      if (temp->data != NULL)
+      {
+        destroyTData(&(temp->data));
+      }
+
+      free(temp);
+    }
+    break;
+
+  default:
+    // Tipo desconocido, solo liberar el nodo
+    free(current);
+    break;
+  }
+
+  *node = NULL;
 }
