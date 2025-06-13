@@ -39,8 +39,8 @@ int options()
   printf("0. Salir\n");
   printf("Selecciona una opcion: ");
   scanf("%d", &option);
-  fflush(stdin);
-  // __fpurge(stdin);
+  // fflush(stdin);
+  __fpurge(stdin);
   return option;
 }
 
@@ -84,8 +84,8 @@ void menu(Af *af)
     printf("0. Mostrar todo\n");
     printf("Selecciona una opcion: ");
     scanf("%d", &opt);
-    fflush(stdin);
-    // __fpurge(stdin);
+    // fflush(stdin);
+    __fpurge(stdin);
     printAf(*af, opt);
     menu(af);
     break;
