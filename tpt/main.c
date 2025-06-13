@@ -83,6 +83,8 @@ void menu(Af *af)
     printf("0. Mostrar todo\n");
     printf("Selecciona una opcion: ");
     scanf("%d", &opt);
+    // fflush(stdin);
+    __fpurge(stdin);
     printAf(*af, opt);
     menu(af);
     break;
@@ -135,7 +137,7 @@ void menu(Af *af)
       }
       else
       {
-        printf("\nEl automata no acepta la cadena ");
+        printf("\nEl automata no acepta la cadena '");
         print(input);
         printf("'.\n");
       }

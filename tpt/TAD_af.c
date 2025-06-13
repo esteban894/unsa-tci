@@ -217,7 +217,10 @@ void printAf(Af af, int showElement)
   case 3:
     printf("\nTransiciones (delta):\n");
     printTransitions(af);
+<<<<<<< HEAD
     printf("\n");
+=======
+>>>>>>> main
     break;
   case 4:
     printf("\nEstado inicial (q0): ");
@@ -287,7 +290,10 @@ void printAf(Af af, int showElement)
 
     printf("\nTransiciones (delta):\n");
     printTransitions(af);
+<<<<<<< HEAD
     printf("\n");
+=======
+>>>>>>> main
     break;
   }
 }
@@ -309,6 +315,10 @@ void printTransitions(Af af)
     {
       printf("  %d. ", transitionNum++);
       printStruct(deltaList->data);
+<<<<<<< HEAD
+=======
+      printf("\n");
+>>>>>>> main
     }
     deltaList = deltaList->next;
   }
@@ -1134,6 +1144,7 @@ int acceptsString(Af af, Str input)
   if (af == NULL || af->q0 == NULL)
     return 0;
 
+<<<<<<< HEAD
   Set currentStates = processString(af, input);
   if (currentStates == NULL)
     return 0;
@@ -1224,10 +1235,22 @@ Set processSymbolFromSet(Af af, Set currentStates, Str symbol)
 }
 
 Set processString(Af af, Str input)
+=======
+  Str currentStateStr = processString(af, input);
+  if (currentStateStr == NULL)
+    return 0;
+
+  int result = isAcceptingState(af, currentStateStr);
+  return result;
+}
+
+Str processString(Af af, Str input)
+>>>>>>> main
 {
   if (af == NULL || af->q0 == NULL)
     return NULL;
 
+<<<<<<< HEAD
   if (isDeterministic(af))
   {
     Str currentState = af->q0->string;
@@ -1294,6 +1317,33 @@ Set processString(Af af, Str input)
 
     return currentStates;
   }
+=======
+  // Comenzar desde el estado inicial
+  Str currentState = af->q0->string;
+  Str inputAux = input;
+
+  // Procesar cada simbolo de entrada
+  while (inputAux != NULL)
+  {
+    // Crear un string de un solo caracter para el simbolo actual
+    Str symbol = createStr();
+    symbol->character = inputAux->character;
+    symbol->sig = NULL;
+
+    // Buscar la transicion correspondiente
+    tData nextStateNode = getTransition(af, currentState, symbol);
+    if (nextStateNode == NULL || nextStateNode->nodeType != STR)
+    {
+      // No hay transicion valida
+      return NULL;
+    }
+
+    currentState = nextStateNode->string;
+    inputAux = inputAux->sig;
+  }
+
+  return currentState;
+>>>>>>> main
 }
 
 void showFormatExamples()
@@ -1305,4 +1355,28 @@ void showFormatExamples()
   printf("* String simple: q0 o estado_inicial\n");
   printf("* Conjunto vacio: {}\n");
   printf("* Lista vacia: []\n\n");
+<<<<<<< HEAD
 }
+=======
+}
+
+/*
+afnd2afd(Af af):
+  sea A = (Q, Sigma, delta, q0, F)
+  q0b = {a0}
+  Qb={q0b}
+  mientras exista P em Qb | deltab(P, a) = null para cualquier a en Sigma:
+    para cada a en SIgma:
+      deltab(P, a) = UNION r en P => delta(r, a)
+      Qb = Qb Union {deltab(P, a)}
+
+  Fb = {}
+
+  para cada R en Qb:
+    si R Intersec F != vacío
+      Fb = Fb Union {R}
+
+  return [Qb, Sigma, deltab, q0b, Fb]
+
+*/
+>>>>>>> main
