@@ -1134,44 +1134,166 @@ int acceptsString(Af af, Str input)
   if (af == NULL || af->q0 == NULL)
     return 0;
 
-  Str currentStateStr = processString(af, input);
-  if (currentStateStr == NULL)
+  Set currentStates = processString(af, input);
+  if (currentStates == NULL)
     return 0;
 
-  int result = isAcceptingState(af, currentStateStr);
+  int result = 0;
+  Set auxSet = currentStates;
+  while (auxSet != NULL && auxSet->string != NULL)
+  {
+    if (isAcceptingState(af, auxSet->string))
+    {
+      result = 1;
+      break;
+    }
+    auxSet = auxSet->sig;
+  }
   return result;
 }
 
-Str processString(Af af, Str input)
+Set getAllTransitions(Af af, Str currentState, Str symbol)
+{
+  Set resultado = createSet();
+
+  if (af == NULL || af->delta == NULL ||
+      currentState == NULL || symbol == NULL)
+  {
+    return resultado;
+  }
+
+  // Recorrer todas las transiciones
+  tData deltaList = af->delta;
+  while (deltaList != NULL)
+  {
+    if (deltaList->data != NULL && deltaList->data->nodeType == SET)
+    {
+      // Extraer elementos de la transición {origen, símbolo, destino}
+      tData transition = deltaList->data;
+      tData elements[3] = {NULL, NULL, NULL};
+      int index = 0;
+
+      tData current = transition;
+      while (current != NULL && index < 3)
+      {
+        elements[index] = current->data;
+        current = current->next;
+        index++;
+      }
+
+      // Verificar si coincide con estado y símbolo actual
+      if (index == 3 && elements[0] != NULL && elements[1] != NULL && elements[2] != NULL)
+      {
+        if (elements[0]->nodeType == STR && elements[1]->nodeType == STR && elements[2]->nodeType == STR)
+        {
+          if (compareStr(elements[0]->string, currentState) == 1 &&
+              compareStr(elements[1]->string, symbol) == 1)
+          {
+            // Agregar estado destino al conjunto resultado
+            appendSet(&resultado, elements[2]->string);
+          }
+        }
+      }
+    }
+    deltaList = deltaList->next;
+  }
+
+  return resultado;
+}
+
+Set processSymbolFromSet(Af af, Set currentStates, Str symbol)
+{
+  Set resultado = createSet();
+
+  if (currentStates == NULL || symbol == NULL)
+  {
+    return resultado;
+  }
+
+  Set estadoActual = currentStates;
+  while (estadoActual != NULL && estadoActual->string != NULL)
+  {
+    Set transicionesDesdeEstado = getAllTransitions(af, estadoActual->string, symbol);
+
+    resultado = unionSet(resultado, transicionesDesdeEstado);
+
+    estadoActual = estadoActual->sig;
+  }
+
+  return resultado;
+}
+
+Set processString(Af af, Str input)
 {
   if (af == NULL || af->q0 == NULL)
     return NULL;
 
-  // Comenzar desde el estado inicial
-  Str currentState = af->q0->string;
-  Str inputAux = input;
-
-  // Procesar cada simbolo de entrada
-  while (inputAux != NULL)
+  if (isDeterministic(af))
   {
-    // Crear un string de un solo caracter para el simbolo actual
-    Str symbol = createStr();
-    symbol->character = inputAux->character;
-    symbol->sig = NULL;
+    Str currentState = af->q0->string;
+    Str inputAux = input;
 
-    // Buscar la transicion correspondiente
-    tData nextStateNode = getTransition(af, currentState, symbol);
-    if (nextStateNode == NULL || nextStateNode->nodeType != STR)
+    while (inputAux != NULL)
     {
-      // No hay transicion valida
-      return NULL;
+      Str symbol = createStr();
+      symbol->character = inputAux->character;
+      symbol->sig = NULL;
+
+      tData nextStateNode = getTransition(af, currentState, symbol);
+      if (nextStateNode == NULL || nextStateNode->nodeType != STR)
+      {
+        return NULL;
+      }
+
+      currentState = nextStateNode->string;
+      inputAux = inputAux->sig;
     }
 
-    currentState = nextStateNode->string;
-    inputAux = inputAux->sig;
+    Set currentStates = createSet();
+    appendSet(&currentStates, currentState);
+    return currentStates;
   }
+  else
+  {
+    Set currentStates = createSet();
+    appendSet(&currentStates, af->q0->string);
 
-  return currentState;
+    printf("   Estados iniciales: ");
+    showSet(currentStates);
+
+    Str inputAux = input;
+    int paso = 0;
+
+    while (inputAux != NULL)
+    {
+      Str symbol = createStr();
+      symbol->character = inputAux->character;
+      symbol->sig = NULL;
+
+      printf("   Paso %d: Estados ", ++paso);
+      showSet(currentStates);
+      printf(" + símbolo '");
+      print(symbol);
+      printf("' → ");
+
+      Set nextStates = processSymbolFromSet(af, currentStates, symbol);
+
+      if (nextStates == NULL || nextStates->string == NULL)
+      {
+        printf("Sin transiciones válidas\n");
+        return NULL;
+      }
+
+      showSet(nextStates);
+      printf("\n");
+
+      destroySet(&currentStates);
+      currentStates = nextStates;
+      inputAux = inputAux->sig;
+    }
+
+    return currentStates;
+  }
 }
 
 void showFormatExamples()

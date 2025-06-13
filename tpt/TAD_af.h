@@ -36,9 +36,11 @@ int belongsToAlphabet(Af af, Str symbol);
 
 // Funciones de aceptacion de cadenas
 int isAcceptingState(Af af, Str state);
-Str processString(Af af, Str input);
+Set processString(Af af, Str input);
 int acceptsString(Af af, Str input);
 tData getTransition(Af af, Str currentState, Str symbol);
+Set getAllTransitions(Af af, Str currentState, Str symbol);
+Set processSymbolFromSet(Af af, Set currentStates, Str symbol);
 
 // Funciones de visualización
 void printAf(Af af, int showElement);
