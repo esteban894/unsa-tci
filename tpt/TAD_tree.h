@@ -53,4 +53,5 @@ int compareNodeStr(tData s1, tData s2);
 void appendNodeList(tData *list, tData node);
 tData toNodeStr(tData list);
 
+void destroyTData(tData *node);
 #endif

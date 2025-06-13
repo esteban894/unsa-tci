@@ -13,6 +13,7 @@ typedef NodoSet *Set;
 Set createSet();
 void appendSet(Set *, Str);
 Set toSet(Str, char);
+Str toStrSet(Set set);
 Set unionSet(Set, Set);
 Set intersectionSet(Set, Set);
 Set diferenceSet(Set, Set);

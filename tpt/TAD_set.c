@@ -276,3 +276,40 @@ void removeSetNode(Set *head, Set target)
   target->sig = NULL;
   destroySet(&target);
 }
+
+Str toStrSet(Set set)
+{
+  Str result = createStr();
+
+  // Agregar '{' al inicio
+  Str open = createStr();
+  open->character = '{';
+  open->sig = NULL;
+  result = concat(result, open);
+
+  Set aux = set;
+  while (aux != NULL)
+  {
+    if (aux->string != NULL)
+    {
+      result = concat(result, aux->string);
+    }
+    if (aux->sig != NULL)
+    {
+      // Agregar coma
+      Str coma = createStr();
+      coma->character = ',';
+      coma->sig = NULL;
+      result = concat(result, coma);
+    }
+    aux = aux->sig;
+  }
+
+  // Agregar '}' al final
+  Str close = createStr();
+  close->character = '}';
+  close->sig = NULL;
+  result = concat(result, close);
+
+  return result;
+}
