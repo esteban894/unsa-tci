@@ -125,6 +125,7 @@ void menu(Af *af)
     {
       printf("\nIngresa una cadena para verificar si el automata la acepta: ");
       Str input = load();
+      __fpurge(stdin);
       if (acceptsString(*af, input))
       {
         printf("\nEl automata acepta la cadena '");

@@ -1131,6 +1131,17 @@ int acceptsString(Af af, Str input)
   if (af == NULL || af->q0 == NULL)
     return 0;
 
+  Str auxInput = input;
+  while (auxInput != NULL)
+  {
+    if (!belongsToAlphabet(af, auxInput))
+    {
+      printf("Cadena no permitida por simbolos fuera de Sigma\n");
+      return 0;
+    }
+    auxInput = auxInput->sig;
+  }
+
   Set currentStateSet = processString(af, input);
 
   if (currentStateSet == NULL)
