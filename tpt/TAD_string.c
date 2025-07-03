@@ -7,7 +7,7 @@ Str createStr()
   Str nuevo = (Str)malloc(sizeof(NodoStr));
   if (nuevo == NULL)
   {
-    printf("Error en la asignación de memoria para el nuevo nodo.");
+    printf("Error en la asignacion de memoria para el nuevo nodo.");
     return NULL;
   }
   nuevo->character = '\0';
@@ -203,4 +203,41 @@ int compareStr(Str s1, Str s2)
   // Si ambas listas llegaron al final, son iguales
   // Si una es NULL y la otra no, no son iguales
   return (s1 == NULL && s2 == NULL) ? 1 : 0;
+}
+
+Str copyString(Str original)
+{
+  if (original == NULL)
+    return NULL;
+
+  Str newStr = createStr();
+  if (newStr == NULL)
+    return NULL;
+
+  Str current = original;
+  Str newCurrent = newStr;
+  int first = 1;
+
+  while (current != NULL)
+  {
+    if (first)
+    {
+      newCurrent->character = current->character;
+      first = 0;
+    }
+    else
+    {
+      Str newNode = createStr();
+      if (newNode == NULL)
+        return NULL;
+
+      newNode->character = current->character;
+      newNode->sig = NULL;
+      newCurrent->sig = newNode;
+      newCurrent = newNode;
+    }
+    current = current->sig;
+  }
+
+  return newStr;
 }

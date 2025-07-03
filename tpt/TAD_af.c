@@ -93,15 +93,15 @@ int setFinalStates(Af af, Set finalStates)
 
 tData createTransition(Str fromState, Str symbol, Str toState)
 {
-  Set transitionSet = createSet();
-  if (transitionSet == NULL)
+  List transitionList = createList();
+  if (transitionList == NULL)
     return NULL;
 
-  appendSet(&transitionSet, fromState);
-  appendSet(&transitionSet, symbol);
-  appendSet(&transitionSet, toState);
+  append(&transitionList, fromState);
+  append(&transitionList, symbol);
+  append(&transitionList, toState);
 
-  return createNodeSet(transitionSet);
+  return createNodeList(transitionList);
 }
 
 int addTransition(Af af, Str fromState, Str symbol, Str toState)
@@ -303,7 +303,7 @@ void printTransitions(Af af)
 
   while (deltaList != NULL)
   {
-    if (deltaList->data != NULL && deltaList->data->nodeType == SET)
+    if (deltaList->data != NULL && deltaList->data->nodeType == LIST)
     {
       printf("  %d. ", transitionNum++);
       printStruct(deltaList->data);
@@ -331,7 +331,7 @@ void skipWhitespace(Str str, int *position)
   }
 }
 
-Str parseString(Str str, int *position)
+tData parseList(Str str, int *position)
 {
   if (str == NULL || position == NULL)
     return NULL;
@@ -344,38 +344,75 @@ Str parseString(Str str, int *position)
     current = current->sig;
   }
 
-  if (current == NULL)
+  if (current == NULL || current->character != '[')
     return NULL;
 
-  Str result = createStr();
-  Str resultTail = NULL;
+  (*position)++; // Saltar el '['
 
-  while (current != NULL && current->character != ',' && current->character != ']' &&
-         current->character != '}' && current->character != ' ')
+  // Crear el nodo principal de la lista
+  tData listHead = (tData)malloc(sizeof(struct dataType));
+  if (listHead == NULL)
+    return NULL;
+
+  listHead->nodeType = LIST;
+  listHead->data = NULL;
+  listHead->next = NULL;
+
+  tData listTail = NULL;
+  int first = 1;
+
+  while (1)
   {
-    Str newNode = createStr();
-    if (newNode == NULL)
-      return NULL;
+    skipWhitespace(str, position);
 
-    newNode->character = current->character;
-    newNode->sig = NULL;
-
-    if (result->character == '\0')
+    current = str;
+    for (int i = 0; i < *position && current != NULL; i++)
     {
-      result->character = current->character;
-      resultTail = result;
-    }
-    else
-    {
-      resultTail->sig = newNode;
-      resultTail = newNode;
+      current = current->sig;
     }
 
-    (*position)++;
-    current = current->sig;
+    if (current == NULL)
+      break;
+
+    if (current->character == ']')
+    {
+      (*position)++; // Saltar el ']'
+      break;
+    }
+
+    // Si no es el primer elemento, esperamos una coma
+    if (!first && current->character == ',')
+    {
+      (*position)++; // Saltar la coma
+      skipWhitespace(str, position);
+    }
+    first = 0;
+
+    tData component = parseComponent(str, position);
+    if (component != NULL)
+    {
+      tData newListNode = (tData)malloc(sizeof(struct dataType));
+      if (newListNode == NULL)
+        return NULL;
+
+      newListNode->nodeType = LIST;
+      newListNode->data = component;
+      newListNode->next = NULL;
+
+      if (listHead->data == NULL)
+      {
+        listHead->data = component;
+        listTail = listHead;
+      }
+      else
+      {
+        listTail->next = newListNode;
+        listTail = newListNode;
+      }
+    }
   }
 
-  return (result->character != '\0') ? result : NULL;
+  return listHead;
 }
 
 tData parseSet(Str str, int *position)
@@ -394,9 +431,17 @@ tData parseSet(Str str, int *position)
   if (current == NULL || current->character != '{')
     return NULL;
 
-  (*position)++;
+  (*position)++; // Saltar el '{'
 
-  Set resultSet = createSet();
+  tData setHead = (tData)malloc(sizeof(struct dataType));
+  if (setHead == NULL)
+    return NULL;
+
+  setHead->nodeType = SET;
+  setHead->data = NULL;
+  setHead->next = NULL;
+
+  tData setTail = NULL;
   int first = 1;
 
   while (1)
@@ -414,54 +459,45 @@ tData parseSet(Str str, int *position)
 
     if (current->character == '}')
     {
-      (*position)++;
+      (*position)++; // Saltar el '}'
       break;
     }
 
     if (!first && current->character == ',')
     {
-      (*position)++;
+      (*position)++; // Saltar la coma
       skipWhitespace(str, position);
     }
     first = 0;
 
-    if (current->character == '{')
+    tData component = parseComponent(str, position);
+    if (component != NULL)
     {
-      tData nestedSet = parseSet(str, position);
-      if (nestedSet != NULL && nestedSet->nodeType == SET)
+      tData newSetNode = (tData)malloc(sizeof(struct dataType));
+      if (newSetNode == NULL)
+        return NULL;
+
+      newSetNode->nodeType = SET;
+      newSetNode->data = component;
+      newSetNode->next = NULL;
+
+      if (setHead->data == NULL)
       {
-        Set traditionalSet = createSet();
-        tData current_nested = nestedSet;
-
-        while (current_nested != NULL)
-        {
-          if (current_nested->data != NULL && current_nested->data->nodeType == STR)
-          {
-            appendSet(&traditionalSet, current_nested->data->string);
-          }
-          current_nested = current_nested->next;
-        }
-
-        Str setStr = toStrSet(traditionalSet);
-        appendSet(&resultSet, setStr);
-
-        destroySet(&traditionalSet);
+        setHead->data = component;
+        setTail = setHead;
       }
-    }
-    else
-    {
-      Str element = parseString(str, position);
-      if (element != NULL)
+      else
       {
-        appendSet(&resultSet, element);
+        setTail->next = newSetNode;
+        setTail = newSetNode;
       }
     }
   }
 
-  return createNodeSet(resultSet);
+  return setHead;
 }
 
-tData parseList(Str str, int *position)
+Str parseString(Str str, int *position)
 {
   if (str == NULL || position == NULL)
     return NULL;
@@ -474,49 +510,46 @@ tData parseList(Str str, int *position)
     current = current->sig;
   }
 
-  if (current == NULL || current->character != '[')
+  if (current == NULL)
     return NULL;
 
-  (*position)++;
+  Str result = createStr();
+  if (result == NULL)
+    return NULL;
 
-  List resultList = createList();
-  tData listNode = createNodeList(resultList);
-  int first = 1;
+  Str resultTail = result;
+  int hasContent = 0;
 
-  while (1)
+  while (current != NULL &&
+         current->character != ',' &&
+         current->character != ']' &&
+         current->character != '}' &&
+         current->character != ' ' &&
+         current->character != '\t' &&
+         current->character != '\n')
   {
-    skipWhitespace(str, position);
-
-    current = str;
-    for (int i = 0; i < *position && current != NULL; i++)
+    if (!hasContent)
     {
-      current = current->sig;
+      result->character = current->character;
+      hasContent = 1;
+    }
+    else
+    {
+      Str newNode = createStr();
+      if (newNode == NULL)
+        return NULL;
+
+      newNode->character = current->character;
+      newNode->sig = NULL;
+      resultTail->sig = newNode;
+      resultTail = newNode;
     }
 
-    if (current == NULL)
-      break;
-
-    if (current->character == ']')
-    {
-      (*position)++;
-      break;
-    }
-
-    if (!first && current->character == ',')
-    {
-      (*position)++;
-      skipWhitespace(str, position);
-    }
-    first = 0;
-
-    tData component = parseComponent(str, position);
-    if (component != NULL)
-    {
-      appendNodeList(&listNode, component);
-    }
+    (*position)++;
+    current = current->sig;
   }
 
-  return listNode;
+  return hasContent ? result : NULL;
 }
 
 tData parseComponent(Str str, int *position)
@@ -817,7 +850,7 @@ Af createAfFromConsole()
   int transitionCount = 0;
   while (1)
   {
-    printf("Transición #%d (o 'fin'): ", transitionCount + 1);
+    printf("Transicion #%d (o 'fin'): ", transitionCount + 1);
 
     Str input = load();
     if (input == NULL)
@@ -834,13 +867,13 @@ Af createAfFromConsole()
     Str origen, simbolo, destino;
     if (!readTransition(input, &origen, &simbolo, &destino))
     {
-      printf("Formato inválido. Usa: origen,simbolo,destino\n");
+      printf("Formato invalido. Usa: origen,simbolo,destino\n");
       continue;
     }
 
     if (!belongsTo(states, origen))
     {
-      printf("Estado origen no válido: \"");
+      printf("Estado origen no valido: \"");
       print(origen);
       printf("\"\n");
       printf("Estados disponibles: ");
@@ -851,7 +884,7 @@ Af createAfFromConsole()
 
     if (!belongsTo(alphabet, simbolo))
     {
-      printf("Símbolo no válido: \"");
+      printf("Simbolo no valido: \"");
       print(simbolo);
       printf("\"\n");
       printf("Alfabeto disponible: ");
@@ -862,7 +895,7 @@ Af createAfFromConsole()
 
     if (!belongsTo(states, destino))
     {
-      printf("Estado destino no válido: \"");
+      printf("Estado destino no valido: \"");
       print(destino);
       printf("\"\n");
       printf("Estados disponibles: ");
@@ -873,7 +906,7 @@ Af createAfFromConsole()
 
     if (addTransition(af, origen, simbolo, destino))
     {
-      printf("Transición agregada: ");
+      printf("Transicion agregada: ");
       print(origen);
       printf(", ");
       print(simbolo);
@@ -884,7 +917,7 @@ Af createAfFromConsole()
     }
     else
     {
-      printf("Error interno al agregar la transición\n");
+      printf("Error interno al agregar la transicion\n");
     }
 
     printf("\n");
@@ -942,19 +975,15 @@ int hasEpsilonTransitions(Af af)
   if (af == NULL || af->delta == NULL)
     return 0;
 
-  // Recorrer todas las transiciones del automata
   tData deltaList = af->delta;
   while (deltaList != NULL)
   {
-    if (deltaList->data != NULL && deltaList->data->nodeType == SET)
+    if (deltaList->data != NULL && deltaList->data->nodeType == LIST)
     {
-
-      // Cada transicion es un conjunto: {estado_origen, simbolo, estado_destino}
       tData transition = deltaList->data;
       tData elements[3] = {NULL, NULL, NULL};
       int index = 0;
 
-      // Extraer los 3 elementos de la transicion
       tData current = transition;
       while (current != NULL && index < 3)
       {
@@ -963,25 +992,23 @@ int hasEpsilonTransitions(Af af)
         index++;
       }
 
-      // Verificar el simbolo (elemento en posicion 1)
       if (index >= 2 && elements[1] != NULL && elements[1]->nodeType == STR)
       {
         Str symbol = elements[1]->string;
 
-        // Verificar si es una transicion epsilon
         if (symbol == NULL ||
             symbol->character == '\0' ||                 // Cadena vacia
             compareStr(symbol, load2("epsilon")) == 1 || // Palabra "epsilon"
             compareStr(symbol, load2("")) == 1)          // Cadena explicitamente vacia
         {
-          return 1; // Si tiene transiciones epsilon
+          return 1;
         }
       }
     }
     deltaList = deltaList->next;
   }
 
-  return 0; // NO tiene transiciones epsilon
+  return 0;
 }
 
 int countTransitions(Af af, Str state, Str symbol)
@@ -994,19 +1021,15 @@ int countTransitions(Af af, Str state, Str symbol)
 
   int count = 0;
 
-  // Recorrer todas las transiciones del automata
   tData deltaList = af->delta;
   while (deltaList != NULL)
   {
-    if (deltaList->data != NULL && deltaList->data->nodeType == SET)
+    if (deltaList->data != NULL && deltaList->data->nodeType == LIST)
     {
-
-      // Cada transicion: {estado_origen, simbolo, estado_destino}
       tData transition = deltaList->data;
       tData elements[3] = {NULL, NULL, NULL};
       int index = 0;
 
-      // Extraer los 3 elementos de la transicion
       tData current = transition;
       while (current != NULL && index < 3)
       {
@@ -1015,16 +1038,14 @@ int countTransitions(Af af, Str state, Str symbol)
         index++;
       }
 
-      // Verificar si esta transicion coincide con el par (estado, simbolo) buscado
       if (index == 3 && elements[0] != NULL && elements[1] != NULL)
       {
         if (elements[0]->nodeType == STR && elements[1]->nodeType == STR)
         {
-          // Comparar estado origen y simbolo
           if (compareStr(elements[0]->string, state) == 1 &&
               compareStr(elements[1]->string, symbol) == 1)
           {
-            count++; // Encontramos una transicion que coincide
+            count++;
           }
         }
       }
@@ -1064,25 +1085,21 @@ void printDeterminismAnalysis(Af af)
 }
 
 // Funciones para determinar aceptacion de cadenas
-
 tData getTransition(Af af, Str currentState, Str symbol)
 {
   if (af == NULL || af->delta == NULL ||
       currentState == NULL || symbol == NULL)
     return NULL;
 
-  // Recorrer la lista de transiciones
   tData deltaList = af->delta;
   while (deltaList != NULL)
   {
-    if (deltaList->data != NULL && deltaList->data->nodeType == SET)
+    if (deltaList->data != NULL && deltaList->data->nodeType == LIST)
     {
-      // Cada transicion es un conjunto de 3 elementos
       tData transition = deltaList->data;
       tData elements[3] = {NULL, NULL, NULL};
       int index = 0;
 
-      // Extraer los 3 elementos de la transicion
       tData current = transition;
       while (current != NULL && index < 3)
       {
@@ -1091,20 +1108,246 @@ tData getTransition(Af af, Str currentState, Str symbol)
         index++;
       }
 
-      // Verificar si coincide con el estado actual y simbolo
       if (index == 3 && elements[0] != NULL && elements[1] != NULL && elements[2] != NULL)
       {
-        if (compareStr(elements[0]->string, currentState) == 1 &&
-            compareStr(elements[1]->string, symbol) == 1)
+        if (elements[0]->nodeType == STR && elements[1]->nodeType == STR && elements[2]->nodeType == STR)
         {
-          return elements[2]; // Retornar el estado destino
+          if (compareStr(elements[0]->string, currentState) == 1 &&
+              compareStr(elements[1]->string, symbol) == 1)
+          {
+            return elements[2];
+          }
+        }
+      }
+    }
+    deltaList = deltaList->next;
+  }
+  printf("No se encontro transicion\n");
+  return NULL;
+}
+
+int acceptsString(Af af, Str input)
+{
+  if (af == NULL || af->q0 == NULL)
+    return 0;
+
+  Set currentStateSet = processString(af, input);
+
+  if (currentStateSet == NULL)
+  {
+    printf("Error: processString retorno NULL\n");
+    return 0;
+  }
+
+  printf("Estados finales alcanzados: ");
+  showSet(currentStateSet);
+
+  Set aux = currentStateSet;
+  int result = 0;
+  while (aux != NULL && aux->string != NULL)
+  {
+    if (isAcceptingState(af, aux->string))
+    {
+      result = 1;
+      break;
+    }
+    aux = aux->sig;
+  }
+  return result;
+}
+
+Set getAllTransitions(Af af, Str currentState, Str symbol)
+{
+  if (af == NULL || af->delta == NULL || currentState == NULL || symbol == NULL)
+  {
+    printf("ERROR: Parametros nulos en getAllTransitions\n");
+    return NULL;
+  }
+
+  Set resultStates = createSet();
+  if (resultStates == NULL)
+  {
+    printf("Error: No se pudo crear resultStates\n");
+    return NULL;
+  }
+
+  tData deltaList = af->delta;
+  int transitionCount = 0;
+
+  while (deltaList != NULL)
+  {
+    transitionCount++;
+
+    if (deltaList->data != NULL && deltaList->data->nodeType == LIST)
+    {
+      tData transition = deltaList->data;
+      tData elements[3] = {NULL, NULL, NULL};
+      int index = 0;
+
+      tData current = transition;
+      while (current != NULL && index < 3)
+      {
+        elements[index] = current->data;
+        current = current->next;
+        index++;
+      }
+
+      if (index == 3 && elements[0] != NULL && elements[1] != NULL && elements[2] != NULL)
+      {
+        if (elements[0]->nodeType == STR && elements[1]->nodeType == STR && elements[2]->nodeType == STR)
+        {
+          if (compareStr(elements[0]->string, currentState) == 1 &&
+              compareStr(elements[1]->string, symbol) == 1)
+          {
+            appendSet(&resultStates, elements[2]->string);
+          }
         }
       }
     }
     deltaList = deltaList->next;
   }
 
-  return NULL; // No se encontro transicion
+  return resultStates;
+}
+
+Set processNextSymbol(Af af, Set currentStates, Str symbol)
+{
+  if (af == NULL || currentStates == NULL || symbol == NULL)
+  {
+    printf("Error: Parametros nulos en processNextSymbol\n");
+    return NULL;
+  }
+
+  Set nextStates = createSet();
+  if (nextStates == NULL)
+  {
+    printf("Error: No se pudo crear nextStates\n");
+    return NULL;
+  }
+
+  Set currentStateNode = currentStates;
+  while (currentStateNode != NULL && currentStateNode->string != NULL)
+  {
+    Set transitionStates = getAllTransitions(af, currentStateNode->string, symbol);
+
+    if (transitionStates != NULL)
+    {
+      Set transNode = transitionStates;
+      while (transNode != NULL && transNode->string != NULL)
+      {
+        appendSet(&nextStates, transNode->string);
+        transNode = transNode->sig;
+      }
+
+      transitionStates = NULL;
+    }
+
+    currentStateNode = currentStateNode->sig;
+  }
+
+  return nextStates;
+}
+
+Set processString(Af af, Str input)
+{
+  if (af == NULL || af->q0 == NULL)
+  {
+    printf("Error: Automata nulo o sin estado inicial\n");
+    return NULL;
+  }
+
+  if (input == NULL)
+  {
+    Set initialStates = createSet();
+    if (initialStates == NULL)
+    {
+      printf("Error: No se pudo crear el conjunto de estados\n");
+      return NULL;
+    }
+    appendSet(&initialStates, af->q0->string);
+    return initialStates;
+  }
+
+  if (isDeterministic(af))
+  {
+    Str currentState = af->q0->string;
+    Str inputAux = input;
+
+    // Procesar cada simbolo de entrada
+    while (inputAux != NULL)
+    {
+      Str symbol = createStr();
+      if (symbol == NULL)
+      {
+        printf("Error: No se pudo crear simbolo\n");
+        return NULL;
+      }
+      symbol->character = inputAux->character;
+      symbol->sig = NULL;
+
+      tData nextStateNode = getTransition(af, currentState, symbol);
+      if (nextStateNode == NULL || nextStateNode->nodeType != STR)
+      {
+        printf("No se encontro transicion para simbolo '%c' desde estado ", inputAux->character);
+        print(currentState);
+        printf("\n");
+        return NULL;
+      }
+
+      currentState = nextStateNode->string;
+      inputAux = inputAux->sig;
+    }
+
+    Set currentStates = createSet();
+    if (currentStates == NULL)
+    {
+      printf("Error: No se pudo crear el conjunto de estados\n");
+      return NULL;
+    }
+    appendSet(&currentStates, currentState);
+
+    return currentStates;
+  }
+  else
+  {
+    Set currentStates = createSet();
+    if (currentStates == NULL)
+    {
+      printf("Error: No se pudo crear conjunto inicial de estados\n");
+      return NULL;
+    }
+    appendSet(&currentStates, af->q0->string);
+
+    Str inputAux = input;
+    while (inputAux != NULL)
+    {
+      Str symbol = createStr();
+      if (symbol == NULL)
+      {
+        printf("Error: No se pudo crear simbolo\n");
+        return NULL;
+      }
+      symbol->character = inputAux->character;
+      symbol->sig = NULL;
+
+      Set nextStates = processNextSymbol(af, currentStates, symbol);
+
+      if (nextStates == NULL || nextStates->string == NULL)
+      {
+        printf("No hay transiciones posibles - cadena rechazada\n");
+        if (nextStates != NULL)
+        {
+          nextStates = NULL;
+        }
+        return NULL;
+      }
+
+      currentStates = nextStates;
+      inputAux = inputAux->sig;
+    }
+
+    return currentStates;
+  }
 }
 
 int isAcceptingState(Af af, Str state)
@@ -1112,7 +1355,6 @@ int isAcceptingState(Af af, Str state)
   if (af == NULL || af->F == NULL || state == NULL)
     return 0;
 
-  // Recorrer el conjunto F y verificar si el estado es de aceptacion
   tData current = af->F;
   while (current != NULL)
   {
@@ -1128,51 +1370,6 @@ int isAcceptingState(Af af, Str state)
   return 0;
 }
 
-int acceptsString(Af af, Str input)
-{
-  if (af == NULL || af->q0 == NULL)
-    return 0;
-
-  Str currentStateStr = processString(af, input);
-  if (currentStateStr == NULL)
-    return 0;
-
-  int result = isAcceptingState(af, currentStateStr);
-  return result;
-}
-
-Str processString(Af af, Str input)
-{
-  if (af == NULL || af->q0 == NULL)
-    return NULL;
-
-  // Comenzar desde el estado inicial
-  Str currentState = af->q0->string;
-  Str inputAux = input;
-
-  // Procesar cada simbolo de entrada
-  while (inputAux != NULL)
-  {
-    // Crear un string de un solo caracter para el simbolo actual
-    Str symbol = createStr();
-    symbol->character = inputAux->character;
-    symbol->sig = NULL;
-
-    // Buscar la transicion correspondiente
-    tData nextStateNode = getTransition(af, currentState, symbol);
-    if (nextStateNode == NULL || nextStateNode->nodeType != STR)
-    {
-      // No hay transicion valida
-      return NULL;
-    }
-
-    currentState = nextStateNode->string;
-    inputAux = inputAux->sig;
-  }
-
-  return currentState;
-}
-
 void showFormatExamples()
 {
   printf("\n EJEMPLOS DE FORMATO:\n");
@@ -1184,22 +1381,330 @@ void showFormatExamples()
   printf("* Lista vacia: []\n\n");
 }
 
-/*
-afnd2afd(Af af):
-  sea A = (Q, Sigma, delta, q0, F)
-  q0b = {a0}
-  Qb={q0b}
-  mientras exista P em Qb | deltab(P, a) = null para cualquier a en Sigma:
-    para cada a en SIgma:
-      deltab(P, a) = UNION r en P => delta(r, a)
-      Qb = Qb Union {deltab(P, a)}
+StateSetList createStateSet(Set states, Str name)
+{
+  StateSetList newStateSet = (StateSetList)malloc(sizeof(StateSet));
+  if (newStateSet == NULL)
+    return NULL;
 
-  Fb = {}
+  newStateSet->states = states;
+  newStateSet->stateName = name;
+  newStateSet->next = NULL;
+  return newStateSet;
+}
 
-  para cada R en Qb:
-    si R Intersec F != vacío
-      Fb = Fb Union {R}
+StateSetList findStateSet(StateSetList list, Set targetStates)
+{
+  StateSetList current = list;
+  while (current != NULL)
+  {
+    if (setsAreEqual(current->states, targetStates))
+    {
+      return current;
+    }
+    current = current->next;
+  }
+  return NULL;
+}
 
-  return [Qb, Sigma, deltab, q0b, Fb]
+int hasUnprocessedStates(StateSetList Qb, StateSetList processed, Af af)
+{
+  StateSetList current = Qb;
+  while (current != NULL)
+  {
+    StateSetList found = findStateSet(processed, current->states);
+    if (found == NULL)
+    {
+      tData alphabetNode = af->Sigma;
+      while (alphabetNode != NULL)
+      {
+        if (alphabetNode->data != NULL && alphabetNode->data->nodeType == STR)
+        {
+          Set targetStates = getUnionOfTransitions(af, current->states, alphabetNode->data->string);
+          if (targetStates != NULL && targetStates->string != NULL)
+          {
+            return 1;
+          }
+        }
+        alphabetNode = alphabetNode->next;
+      }
+    }
+    current = current->next;
+  }
+  return 0;
+}
 
-*/
+Set getUnionOfTransitions(Af af, Set stateSet, Str symbol)
+{
+  if (af == NULL || stateSet == NULL || symbol == NULL)
+    return NULL;
+
+  Set result = createSet();
+  if (result == NULL)
+    return NULL;
+
+  Set currentState = stateSet;
+  while (currentState != NULL && currentState->string != NULL)
+  {
+    Set transitions = getAllTransitions(af, currentState->string, symbol);
+    if (transitions != NULL)
+    {
+      Set transNode = transitions;
+      while (transNode != NULL && transNode->string != NULL)
+      {
+        appendSet(&result, transNode->string);
+        transNode = transNode->sig;
+      }
+    }
+    currentState = currentState->sig;
+  }
+
+  return (result->string != NULL) ? result : NULL;
+}
+
+void addStateSetIfNotExists(StateSetList *list, Set states)
+{
+  if (states == NULL || states->string == NULL)
+    return;
+
+  if (findStateSet(*list, states) != NULL)
+    return;
+
+  Str name = toStrSet(states);
+  StateSetList newStateSet = createStateSet(states, name);
+  if (newStateSet == NULL)
+    return;
+
+  if (*list == NULL)
+  {
+    *list = newStateSet;
+  }
+  else
+  {
+    StateSetList current = *list;
+    while (current->next != NULL)
+    {
+      current = current->next;
+    }
+    current->next = newStateSet;
+  }
+}
+
+Af afnd2afd(Af afnd)
+{
+  if (afnd == NULL)
+  {
+    printf("Error: AFND es NULL\n");
+    return NULL;
+  }
+
+  if (isDeterministic(afnd))
+  {
+    printf("El automata ya es determinista\n");
+    return afnd;
+  }
+
+  printf("\n=== CONVIRTIENDO AFND A AFD ===\n");
+
+  // Paso 1: Inicializacion
+  // q0b = {q0}
+  Set q0b = createSet();
+  if (afnd->q0 != NULL && afnd->q0->nodeType == STR)
+  {
+    appendSet(&q0b, afnd->q0->string);
+  }
+
+  // Qb = {q0b}
+  StateSetList Qb = NULL;
+  addStateSetIfNotExists(&Qb, q0b);
+
+  StateSetList processed = NULL;
+
+  // Paso 2: Construccion de estados y transiciones
+  StateSetList currentStateSet = Qb;
+  while (currentStateSet != NULL)
+  {
+    if (findStateSet(processed, currentStateSet->states) == NULL)
+    {
+      addStateSetIfNotExists(&processed, currentStateSet->states);
+
+      // Para cada símbolo del alfabeto
+      tData alphabetNode = afnd->Sigma;
+      while (alphabetNode != NULL)
+      {
+        if (alphabetNode->data != NULL && alphabetNode->data->nodeType == STR)
+        {
+          // deltab(P, a) = UNION r en P => delta(r, a)
+          Set targetStates = getUnionOfTransitions(afnd, currentStateSet->states, alphabetNode->data->string);
+
+          if (targetStates != NULL && targetStates->string != NULL)
+          {
+            // Qb = Qb Union {deltab(P, a)}
+            addStateSetIfNotExists(&Qb, targetStates);
+          }
+        }
+        alphabetNode = alphabetNode->next;
+      }
+    }
+    currentStateSet = currentStateSet->next;
+  }
+
+  // Paso 3: Crear el AFD resultante
+  Af afd = createAf();
+  if (afd == NULL)
+  {
+    printf("Error: No se pudo crear el AFD\n");
+    return NULL;
+  }
+
+  // Crear conjunto de estados Qb
+  Set afdStates = createSet();
+  StateSetList current = Qb;
+  while (current != NULL)
+  {
+    appendSet(&afdStates, current->stateName);
+    current = current->next;
+  }
+  setStates(afd, afdStates);
+
+  // Crear conjunto de simbolos Sigma
+  Set afdAlphabet = createSet();
+  tData alphaNode = afnd->Sigma;
+  while (alphaNode != NULL)
+  {
+    if (alphaNode->data != NULL && alphaNode->data->nodeType == STR)
+    {
+      appendSet(&afdAlphabet, alphaNode->data->string);
+    }
+    alphaNode = alphaNode->next;
+  }
+  setAlphabet(afd, afdAlphabet);
+
+  // Estado inicial del AFD
+  Str afdInitialState = toStrSet(q0b);
+  setInitialState(afd, afdInitialState);
+
+  // Paso 4: Crear transiciones del AFD
+  current = Qb;
+  while (current != NULL)
+  {
+    tData alphabetNode = afnd->Sigma;
+    while (alphabetNode != NULL)
+    {
+      if (alphabetNode->data != NULL && alphabetNode->data->nodeType == STR)
+      {
+        Set targetStates = getUnionOfTransitions(afnd, current->states, alphabetNode->data->string);
+        if (targetStates != NULL && targetStates->string != NULL)
+        {
+          Str targetStateName = toStrSet(targetStates);
+          addTransition(afd, current->stateName, alphabetNode->data->string, targetStateName);
+        }
+      }
+      alphabetNode = alphabetNode->next;
+    }
+    current = current->next;
+  }
+
+  // Paso 5: Crear estados finales Fb
+  Set originalFinalStates = getOriginalFinalStates(afnd);
+  if (originalFinalStates == NULL)
+  {
+    printf("Error: No se pudieron obtener estados finales originales\n");
+    destroyAf(&afd);
+    return NULL;
+  }
+
+  Set afdFinalStates = createSet();
+  if (afdFinalStates == NULL)
+  {
+    printf("ERROR: No se pudo crear conjunto de estados finales AFD\n");
+    destroyAf(&afd);
+    return NULL;
+  }
+
+  current = Qb;
+  while (current != NULL)
+  {
+    if (containsFinalState(current->states, originalFinalStates))
+    {
+      appendSet(&afdFinalStates, current->stateName);
+    }
+    current = current->next;
+  }
+
+  setFinalStates(afd, afdFinalStates);
+
+  printf("\n=== AFD RESULTANTE ===\n");
+  printAf(afd, 0);
+
+  return afd;
+}
+
+int containsFinalState(Set stateSet, Set finalStates)
+{
+  if (stateSet == NULL || finalStates == NULL)
+  {
+    return 0;
+  }
+
+  Set currentState = stateSet;
+  while (currentState != NULL && currentState->string != NULL)
+  {
+    Set currentFinal = finalStates;
+    while (currentFinal != NULL && currentFinal->string != NULL)
+    {
+      if (compareStr(currentState->string, currentFinal->string) == 1)
+      {
+        return 1;
+      }
+      currentFinal = currentFinal->sig;
+    }
+    currentState = currentState->sig;
+  }
+
+  return 0;
+}
+
+Set getOriginalFinalStates(Af afnd)
+{
+  if (afnd == NULL || afnd->F == NULL)
+  {
+    printf("Error: AFND o F es NULL\n");
+    return NULL;
+  }
+
+  Set finalStates = createSet();
+  if (finalStates == NULL)
+  {
+    printf("Error: No se pudo crear conjunto de estados finales\n");
+    return NULL;
+  }
+
+  tData current = afnd->F;
+  while (current != NULL)
+  {
+    if (current->data != NULL && current->data->nodeType == STR)
+    {
+      appendSet(&finalStates, current->data->string);
+    }
+    current = current->next;
+  }
+
+  return finalStates;
+}
+
+void destroyStateSetList(StateSetList *list)
+{
+  StateSetList current = *list;
+  while (current != NULL)
+  {
+    StateSetList temp = current;
+    current = current->next;
+    if (temp->states != NULL)
+    {
+      destroySet(&(temp->states));
+    }
+    free(temp);
+  }
+  *list = NULL;
+}

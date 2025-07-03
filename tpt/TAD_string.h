@@ -18,5 +18,5 @@ Str concat(Str, Str);
 Str beforeToken(Str, char);
 Str load3(); // load from file
 int compareStr(Str s1, Str s2);
-
+Str copyString(Str original);
 #endif

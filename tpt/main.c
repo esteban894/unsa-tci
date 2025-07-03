@@ -7,10 +7,6 @@ void menu(Af *af);
 
 int main()
 {
-  // Str automatonStr = load2("[{q0,q1},{0,1},[{q0,0,q1},{q0,1,q0},{q1,0,q0},{q1,1,q1}],q0,{q0}]");
-
-  // Parsear
-  // Af automaton = parseAfFromString(automatonStr);
   Af af = createAf();
 
   if (af == NULL)
@@ -36,11 +32,12 @@ int options()
   printf("5. Determinar si el af acepta una cadena hardcodeada\n");
   printf("6. Determinar si el af acepta una cadena ingresada por consola\n");
   printf("7. Crear caso de prueba para un AFD que acepte cadenas sobre 0,1 con cantidad impar de 0's\n");
+  printf("8. Conversion de AFND a AFD\n");
   printf("0. Salir\n");
   printf("Selecciona una opcion: ");
   scanf("%d", &option);
-  // fflush(stdin);
-  __fpurge(stdin);
+  fflush(stdin);
+  // __fpurge(stdin);
   return option;
 }
 
@@ -50,7 +47,7 @@ void menu(Af *af)
   switch (op)
   {
   case 1:
-    *af = parseAfFromString(load2("[{q0,q1},{0,1},[{q0,0,q1},{q0,1,q0},{q1,0,q0},{q1,1,q1}],q0,{q0}]"));
+    *af = parseAfFromString(load2("[{q0,q1},{0,1},[[q0,0,q1],[q0,1,q0],[q1,0,q0],[q1,1,q1]],q0,{q0}]"));
     if (*af == NULL)
     {
       printf("\nError al crear el automata desde la cadena.\n");
@@ -84,8 +81,8 @@ void menu(Af *af)
     printf("0. Mostrar todo\n");
     printf("Selecciona una opcion: ");
     scanf("%d", &opt);
-    // fflush(stdin);
-    __fpurge(stdin);
+    fflush(stdin);
+    // __fpurge(stdin);
     printAf(*af, opt);
     menu(af);
     break;
@@ -145,7 +142,7 @@ void menu(Af *af)
     break;
   case 7:
     printf("\nCreando caso de prueba para un AFD que acepte cadenas sobre 0,1 con cantidad impar de 0's...\n");
-    Af afd = parseAfFromString(load2("[{q_par,q_impar},{0,1},[{q_par,0,q_impar},{q_par,1,q_par},{q_impar,0,q_par},{q_impar,1,q_impar}],q_par,{q_impar}]"));
+    Af afd = parseAfFromString(load2("[{q_par,q_impar},{0,1},[[q_par,0,q_impar],[q_par,1,q_par],[q_impar,0,q_par],[q_impar,1,q_impar]],q_par,{q_impar}]"));
     if (afd == NULL)
     {
       printf("\nError al crear el AFD.\n");
@@ -168,6 +165,30 @@ void menu(Af *af)
         printf("'.\n");
       }
       destroyAf(&afd);
+    }
+    menu(af);
+    break;
+  case 8:
+    if (*af != NULL)
+    {
+      Af afnd = *af;
+      printf("\n=== AFND ORIGINAL ===\n");
+      printAf(afnd, 0);
+
+      printf("\nIniciando conversion...\n");
+      Af afd = afnd2afd(afnd);
+
+      if (afd == NULL)
+      {
+        printf("Error: La conversion fallo\n");
+        menu(af);
+        break;
+      }
+      *af = afd;
+    }
+    else
+    {
+      printf("\nError: El automata no esta definido.\n");
     }
     menu(af);
     break;

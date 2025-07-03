@@ -11,12 +11,22 @@ typedef struct
 {
   tData Q;     // Conjunto de estados (SET de strings)
   tData Sigma; // Alfabeto (SET de strings)
-  tData delta; // Función de transición (LIST de SETs de 3 elementos: {estado_origen, símbolo, estado_destino})
+  tData delta; // Función de transición (LIST de LISTs de 3 elementos: [estado_origen, símbolo, estado_destino])
   tData q0;    // Estado inicial (STR)
   tData F;     // Conjunto de estados de aceptación (SET de strings)
 } AfStruct;
 
 typedef AfStruct *Af;
+
+// Estructura para conversion de AFND -> AFD
+typedef struct StateSet
+{
+  Set states;    // Conjunto de estados del AFND que representa este estado del AFD
+  Str stateName; // Nombre único para este estado (ej: "{q0,q1}")
+  struct StateSet *next;
+} StateSet;
+
+typedef StateSet *StateSetList;
 
 // Funciones principales
 Af createAf();
@@ -35,10 +45,12 @@ int belongsToStates(Af af, Str state);
 int belongsToAlphabet(Af af, Str symbol);
 
 // Funciones de aceptacion de cadenas
-int isAcceptingState(Af af, Str state);
-Str processString(Af af, Str input);
 int acceptsString(Af af, Str input);
+Set processString(Af af, Str input);
+int isAcceptingState(Af af, Str state);
 tData getTransition(Af af, Str currentState, Str symbol);
+Set getAllTransitions(Af af, Str currentState, Str symbol);
+Set processNextSymbol(Af af, Set currentStates, Str symbol);
 
 // Funciones de visualización
 void printAf(Af af, int showElement);
@@ -66,4 +78,14 @@ Str readStr(const char *componentName, Set validStates);
 int readTransition(Str input, Str *origen, Str *simbolo, Str *destino);
 void showFormatExamples();
 
+// Conversion AFND -> AFD
+Af afnd2afd(Af afnd);
+StateSetList createStateSet(Set states, Str name);
+StateSetList findStateSet(StateSetList list, Set targetStates);
+int hasUnprocessedStates(StateSetList Qb, StateSetList processed, Af af);
+Set getUnionOfTransitions(Af af, Set stateSet, Str symbol);
+void addStateSetIfNotExists(StateSetList *list, Set states);
+Set getOriginalFinalStates(Af afnd);
+int containsFinalState(Set stateSet, Set finalStates);
+void destroyStateSetList(StateSetList *list);
 #endif

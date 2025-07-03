@@ -23,4 +23,6 @@ int belongsTo(Set, Str);
 int includedIn(Set, Set);
 void destroySet(Set *);
 void removeSetNode(Set *head, Set target);
+int setsAreEqual(Set set1, Set set2);
+
 #endif

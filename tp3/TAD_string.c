@@ -7,7 +7,7 @@ str create()
   str nuevo = (str)malloc(sizeof(str));
   if (nuevo == NULL)
   {
-    printf("Error en la asignación de memoria para el nuevo nodo.");
+    printf("Error en la asignacion de memoria para el nuevo nodo.");
     return NULL;
   }
   nuevo->character = '\0';

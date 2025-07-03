@@ -8,7 +8,7 @@ Set createSet()
   Set nuevo = (Set)malloc(sizeof(NodoSet));
   if (nuevo == NULL)
   {
-    printf("Error en la asignación de memoria para el nuevo nodo del conjunto.");
+    printf("Error en la asignacion de memoria para el nuevo nodo del conjunto.");
     return NULL;
   }
   nuevo->string = NULL;
@@ -27,6 +27,9 @@ void appendSet(Set *conjunto, Str cadena)
     (*conjunto)->sig = NULL;
     return;
   }
+
+  if (belongsTo(*conjunto, cadena))
+    return;
 
   Set aux = *conjunto;
   while (aux->sig != NULL)
@@ -280,8 +283,6 @@ void removeSetNode(Set *head, Set target)
 Str toStrSet(Set set)
 {
   Str result = createStr();
-
-  // Agregar '{' al inicio
   Str open = createStr();
   open->character = '{';
   open->sig = NULL;
@@ -296,7 +297,6 @@ Str toStrSet(Set set)
     }
     if (aux->sig != NULL)
     {
-      // Agregar coma
       Str coma = createStr();
       coma->character = ',';
       coma->sig = NULL;
@@ -305,11 +305,40 @@ Str toStrSet(Set set)
     aux = aux->sig;
   }
 
-  // Agregar '}' al final
   Str close = createStr();
   close->character = '}';
   close->sig = NULL;
   result = concat(result, close);
 
   return result;
+}
+
+int setsAreEqual(Set set1, Set set2)
+{
+  if (set1 == NULL && set2 == NULL)
+    return 1;
+  if (set1 == NULL || set2 == NULL)
+    return 0;
+
+  Set current1 = set1;
+  while (current1 != NULL && current1->string != NULL)
+  {
+    if (!belongsTo(set2, current1->string))
+    {
+      return 0;
+    }
+    current1 = current1->sig;
+  }
+
+  Set current2 = set2;
+  while (current2 != NULL && current2->string != NULL)
+  {
+    if (!belongsTo(set1, current2->string))
+    {
+      return 0;
+    }
+    current2 = current2->sig;
+  }
+
+  return 1;
 }

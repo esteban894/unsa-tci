@@ -8,7 +8,7 @@ set createSet()
   set nuevo = (set)malloc(sizeof(NodoSet));
   if (nuevo == NULL)
   {
-    printf("Error en la asignación de memoria para el nuevo nodo del conjunto.");
+    printf("Error en la asignacion de memoria para el nuevo nodo del conjunto.");
     return NULL;
   }
   nuevo->string = NULL;
